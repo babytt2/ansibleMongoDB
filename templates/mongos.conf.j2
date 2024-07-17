@@ -1,0 +1,33 @@
+systemLog:
+  verbosity: 0
+  destination: {{ mongodb_systemlog_destination }}
+  logAppend: {{ mongodb_systemlog_logappend }}
+  logRotate: {{ mongodb_systemlog_logrotate }}
+  path: {{ mongos_systemlog_path }}
+
+net:
+  port: {{ mongodb_net_port }}
+  bindIpAll: true
+  maxIncomingConnections: {{ mongodb_net_maxconns | int }}
+  wireObjectCheck: true
+  serviceExecutor: synchronous
+  compression:
+    compressors: {{ mongodb_net_compressors }}
+
+security:
+{% if is_mongos == true and mongodb_security_authorization == 'enabled' %}
+  keyFile: {{ mongodb_security_keyfile }}
+{% endif %}
+
+processManagement:
+  fork: {{ mongodb_processmanagement_fork }}
+  pidFilePath: {{ mongos_pidfile_path }}
+
+{% if mongodb_configdb == 'enabled' and is_mongos == true %}
+sharding:
+  configDB: "{{ mongodb_replication_replset }}/{{ groups.config_master[0] }}:{{ mongodb_net_port }},{{ groups.config_replica[0] }}:{{ mongodb_net_port }},{{ groups.config_replica2[0] }}:{{ mongodb_net_port }}"
+{% endif %}
+
+{% macro comma(loop) %}
+{{ ',' if not loop.last else '' }}
+{%- endmacro -%}
