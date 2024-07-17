@@ -1,0 +1,14 @@
+[Unit]
+Description=mongos
+After=network.target
+
+[Service]
+User=mongodb
+Group=mongodb
+LimitNOFILE={{ mongodb_openfiles }}
+LimitNPROC={{ mongodb_net_maxconns }}
+ExecStart={{ mongodb_link_path }}/mongos --config {{ mongodb_config_path }}/mongos.conf
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
