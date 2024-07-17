@@ -1,0 +1,78 @@
+---
+
+- name: Carete group
+  group:
+    name: "{{ linux_user }}"
+    state: present
+
+- name: Create mongodb user
+  user:
+    name: "{{ linux_user }}"
+    group: "{{ linux_user }}"
+    shell: /bin/bash
+
+- name: Add nofile pam_limits for mongodb domain with enforcing both hard and soft types to /etc/security/limits.conf
+  pam_limits:
+    domain: "{{ linux_user }}"
+    limit_type: "-"
+    limit_item: "nofile"
+    value: 65535
+
+- name: Add nproc pam_limits for mongodb domain with enforcing both hard and soft types to /etc/security/limits.conf
+  pam_limits:
+    domain: "{{ linux_user }}"
+    limit_type: "-"
+    limit_item: "nproc"
+    value: 65535
+
+- name: Create keyFile
+  copy:
+    dest: "{{ mongodb_security_keyfile }}"
+    content: "{{ mongodb_keyfile_content }}"
+    owner: "{{ linux_user }}"
+    group: "{{ linux_user }}"
+    mode: 0600
+  when: (mongodb_replication_replset and mongodb_replication_replset != '' and is_mongos == false) or (is_mongos == true)
+
+- name: create mongodb directory and subdirectorys with new uid
+  file: path={{ mongodb_storage_dbpath }} owner={{ linux_user }} group={{ linux_user }} follow=yes state=directory
+  when: mongodb_systemlog_destination == "file"
+
+- name: create backup directory
+  file: path={{ mongodb_backup_path }} owner={{ linux_user }} group={{ linux_user }} follow=yes state=directory
+  when: mongodb_systemlog_destination == "file"
+
+- name: create config directory
+  file: path={{ mongodb_config_path }} owner={{ linux_user }} group={{ linux_user }} follow=yes state=directory
+  when: mongodb_systemlog_destination == "file"
+
+- name: Create log dir if missing
+  file: state=directory recurse=yes dest={{ mongodb_systemlog_path | dirname }} owner={{ linux_user }} group={{ linux_user }} mode=0755
+  when: mongodb_systemlog_destination == "file"
+
+# if not mongos
+- name: Create mongodb.log if missing
+  file: state=touch dest={{ mongodb_systemlog_path }} owner={{ linux_user }} group={{ linux_user }} mode=0644
+  when: ( mongodb_systemlog_destination == "file"
+        and is_mongos == false )
+
+# if is mongos
+- name: Create mongos.log if missing
+  file: state=touch dest={{ mongos_systemlog_path }} owner={{ linux_user }} group={{ linux_user }} mode=0644
+  when: ( mongodb_systemlog_destination == "file"
+        and is_mongos == true  )
+
+- name: Ensure dbpath directory
+  file:
+    path: "{{ mongodb_storage_dbpath }}"
+    state: directory
+    owner: "{{ linux_user }}"
+    recurse: yes
+
+- name: Configure mongodb
+  template: src=mongodb.conf.j2 dest={{ mongodb_config_path }}/mongodb.conf backup=yes owner={{ linux_user }} group={{ linux_user }} mode=0640
+  when: is_mongos == false
+
+- name: Configure mongos
+  template: src=mongos.conf.j2 dest={{ mongodb_config_path }}/mongos.conf backup=yes owner={{ linux_user }} group={{ linux_user }} mode=0640
+  when: is_mongos == true
