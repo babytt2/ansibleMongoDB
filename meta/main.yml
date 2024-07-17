@@ -1,0 +1,13 @@
+dependencies: []
+
+galaxy_info:
+  author: babytt2
+  description: Install and Configure MongoDB with authentication (include replicaSet, cluster)
+  platforms:
+  - name: Ubuntu
+    versions:
+    - xenial
+    - bionic
+  galaxy_tags:
+  - database
+  - database: nosql
