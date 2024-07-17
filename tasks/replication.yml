@@ -1,0 +1,37 @@
+- name: Replication configuration
+  mongodb_replication:
+    login_host: "{{ item.login_host|default('localhost') }}"
+    login_port: "{{ item.login_port|default(62222) }}"
+    login_user: "{{ mongodb_root_admin_name }}"
+    login_password: "{{ mongodb_root_admin_password }}"
+    replica_set: "{{ mongodb_replication_replset }}"
+    host_name: "{{ item.host_name }}"
+    host_port: "{{ item.host_port|default(62222) }}"
+    host_type: "{{ item.host_type|default('replica') }}"
+    hidden: "{{ item.hidden|default(false) }}"
+    state: "{{ item.state|default('present') }}"
+    priority: "{{ item.priority|default(1.0) }}"
+  when: mongodb_security_authorization == 'enabled'
+  with_items:
+    - "{{ mongodb_replication_params|default([]) }}"
+  ignore_errors: true
+  no_log: true
+
+- name: Replication configuration without auth
+  mongodb_replication:
+    login_host: "{{ item.login_host|default('localhost') }}"
+    login_port: "{{ item_login_port|default(62222) }}"
+    login_user: "{{ mongodb_root_admin_name }}"
+    login_password: "{{ mongodb_root_admin_password }}"
+    replica_set: "{{ mongodb_replication_replset }}"
+    host_name: "{{ item.host_name }}"
+    host_port: "{{ item.host_port|default(62222) }}"
+    host_type: "{{ item.host_type|default('replica') }}"
+    hidden: "{{ item.hidden|default(false) }}"
+    sstate: "{{ item.state|default('present') }}"
+    priority: "{{ item.priority|default(1.0) }}"
+  when: mongodb_security_authorization == 'disabled'
+  with_items:
+    - "{{ mongodb_replication_params|default([]) }}"
+  ignore_errors: true
+  no_log: true
