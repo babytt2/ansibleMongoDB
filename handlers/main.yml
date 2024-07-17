@@ -1,0 +1,28 @@
+# if not mongos
+- name: mongodb reload
+  systemd: name={{ mongodb_daemon_name }} state=reloaded
+  when: mongodb_is_systemd and is_mongos == 'false'
+
+- name: mongodb restart
+  systemd: name={{ mongodb_daemon_name }} state=restarted
+  when: mongodb_is_systemd and is_mongos == 'false'
+
+- name: reload systemd
+  shell: systemctl daemon-reload
+  when: mongodb_is_systemd and mongodb_manage_service and is_mongos == 'false'
+
+# if is mongos
+- name: mongodb reload
+  systemd: name={{ mongos_daemon_name }} state=reloaded
+  when: mongodb_is_systemd and is_mongos == 'true'
+
+- name: mongodb restart
+  systemd: name={{ mongos_daemon_name }} state=restarted
+  when: mongodb_is_systemd and is_mongos == 'true'
+
+- name: reload systemd
+  shell: systemctl daemon-reload
+  when: mongodb_is_systemd and mongodb_manage_service and is_mongos == 'true'
+
+- name: restart sysfsutils
+  service: name=sysfsutils state=restarted
