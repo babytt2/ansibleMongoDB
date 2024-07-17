@@ -1,0 +1,47 @@
+- name: create administrative user siteRootAdmin (admin)
+  mongodb_user:
+    database: admin
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    update_password: "{{ mongodb_user_update_password }}"
+    roles: "{{ item.roles }}"
+    login_port: "{{ mongodb_net_port }}"
+  with_items:
+    - {
+      name: "{{ mongodb_root_admin_name }}",
+      password: "{{ admin_pwd }}",
+      roles: "root"
+      }
+
+- name: create administrative user siteUserAdmin
+  mongodb_user:
+    database: admin
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    update_password: "{{ mongodb_user_update_password }}"
+    roles: "{{ item.roles }}"
+    login_port: "{{ mongodb_net_port }}"
+  with_items:
+    - {
+      name: "{{ mongodb_user_admin_name }}",
+      password: "{{ mongodb_user_admin_password }}",
+      roles: "userAdminAnyDatabase"
+      }
+  when: mongodb_user_admin_name is defined
+
+- name: create backup user "backup_user"
+  mongodb_user:
+    database: admin
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    update_password: "{{ mongodb_user_update_password }}"
+    roles: "{{ item.roles }}"
+    login_port: "{{ mongodb_net_port }}"
+  with_items:
+    - {
+      name: "{{ mongodb_root_backup_name }}",
+      password: "{{ mongodb_root_backup_password }}",
+      roles: "backup,clusterMonitor"
+      }
+  when: mongodb_root_backup_name is defined
+  #no_log: true
