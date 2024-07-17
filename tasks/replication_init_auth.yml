@@ -1,0 +1,65 @@
+---
+- name: Replication configuration | 1st Pt.
+  mongodb_replication:
+    login_host: "{{ mongodb_login_host|default('localhost') }}"
+    login_port: "{{ mongodb_net_port|default(62222) }}"
+    login_user: "{{ mongodb_root_admin_name }}"
+    login_password: "{{ mongodb_root_admin_password }}"
+    replica_set: "{{ mongodb_replication_replset }}"
+    host_name: "{{ item.host_name }}"
+    host_port: "{{ item.host_port|default(62222) }}"
+    host_type: "{{ item.host_type|default('replica') }}"
+    hidden: "{{ item.hidden|default(false) }}"
+    priority: "{{ item.priority|default(1.0) }}"
+  with_items:
+    - "{{ mongodb_replication_params|default([]) }}"
+  register: mongodb_replica_init
+  ignore_errors: true
+  #no_log: true
+
+# Distribute MognoDB INIT Confguration (without auth)
+- name: Use different mongodb.conf for auth initialization
+  template: src=mongodb_init.conf.j2 dest={{ mongodb_config_path }}/mongodb.conf owner={{ linux_user }} group={{ linux_user }} mode=0640
+
+# Restart Mongodb
+- name: Restart mongodb service
+  systemd: name={{ mongodb_daemon_name }} state=restarted
+  when: mongodb_manage_service == true
+
+- name: wait MongoDB port is listening
+  wait_for: host=127.0.0.1 port="{{ mongodb_net_port }}" delay=5 state=started
+
+# Create Accounts
+- include: auth_initialization.yml
+  when: mongodb_replica_init is failed
+
+## Distribute MognoDB Confguration (with auth)
+- name: Move back mongodb.conf
+  template: src=mongodb.conf.j2 dest={{ mongodb_config_path }}/mongodb.conf owner={{ linux_user }} group={{ linux_user }} mode=0640
+
+# Restart Mongodb
+- name: Restart mongodb service
+  systemd: name={{ mongodb_daemon_name }} state=restarted
+  when: mongodb_manage_service == true
+
+- name: Wait MongoDB port is listening
+  wait_for: host="{{ item }}" port="{{ mongodb_net_port }}" delay=5 state=started
+  with_items: "{{ mongodb_net_bindip.split(',') | map('replace', '0.0.0.0', '127.0.0.1') | list }}"
+
+# Retry replication
+- name: Replication configuration | 2nd Pt.
+  mongodb_replication:
+    login_host: "{{ mongodb_login_host|default('localhost') }}"
+    login_port: "{{ mongodb_net_port|default(62222) }}"
+    login_user: "{{ mongodb_root_admin_name }}"
+    login_password: "{{ mongodb_root_admin_password }}"
+    replica_set: "{{ mongodb_replication_replset }}"
+    host_name: "{{ item.host_name }}"
+    host_port: "{{ item.host_port|default(62222) }}"
+    host_type: "{{ item.host_type|default('replica') }}"
+    hidden: "{{ item.hidden|default(false) }}"
+    priority: "{{ item.priority|default(1.0) }}"
+  when: mongodb_replica_init is failed
+  with_items:
+    - "{{ mongodb_replication_params|default([]) }}"
+  #no_log: true
