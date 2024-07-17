@@ -1,0 +1,112 @@
+#email
+mail_recipient: "your_email@mail.com"
+
+mongodb_version: "4.2" # version override from group_vars files
+
+mongodb_is_systemd: true
+
+mongodb_pymongo_from_pip: false
+mongodb_pymongo_pip_version:
+
+mongodb_user_update_password: "on_create"
+mongodb_manage_service: true
+
+mongodb_disable_transparent_hugepages: true
+
+linux_user: "mongodb"
+mongodb_daemon_name: "mongodb.service"
+mongodb_link_path: "/home/mongodb/mongodb/bin"
+
+# mongodb resource
+mongodb_tarfile_src_path: "/ansible/sources/"
+mongodb_tarfile_extract_path: "/usr/local"
+mongodb_tarfile_ubuntu16:
+  "3.6" : "mongodb-linux-x86_64-ubuntu1604-3.6.12"
+  "4.0" : "mongodb-linux-x86_64-ubuntu1604-4.0.9"
+  "4.2" : "mongodb-linux-x86_64-ubuntu1604-4.2.1"
+mongodb_tarfile_ubuntu18:
+  "4.0" : "mongodb-linux-x86_64-4.0.10"
+
+mongodb_config_path: "/etc/mongodb"
+
+# net Options
+mongodb_net_bindip: "0.0.0.0"
+mongodb_net_http_enbled: "false"
+mongodb_net_ipv6: "false"
+mongodb_net_maxconns: 65535
+mongodb_openfiles: 65535
+mongodb_net_port: 62222
+mongodb_net_compressors: "snappy"
+
+
+# processManagement Options
+# Enabled by default for RedHat as the init scripts assume forking is enabled "{{ 'RedHat' == ansible_os_family }}"
+mongodb_processmanagement_fork: "false"
+
+# security Options
+mongodb_security_authorization: "disabled"
+mongodb_security_keyfile: "/home/mongodb/mongodb-keyfile" # /etc/mongodb-keyfile
+
+# storage path
+mongodb_storage_dbpath: "/data/dbfiles"
+mongodb_storage_dirperdb: "false"
+
+# backup path
+mongodb_backup_path: "/data/backup"
+
+# storage engine for the mongod. Available values:
+# 'mmapv1', 'wiredTiger'
+mongodb_storage_engine: "wiredTiger"
+mongodb_engine_cachesizegb: "{{ ((ansible_memtotal_mb - 1024)*0.5)/1024 | float }}"
+# mmapv1 specific options
+mongodb_storage_quota_enforced: "false"
+mongodb_storage_quota_maxfiles: 8
+mongodb_storage_smallfiles: "false"
+
+mongodb_storage_journal_enabled: "true"
+mongodb_storage_prealloc: "true"
+
+# systemLog Options
+mongodb_systemlog_path: "/data/logs/mongodb.log"
+mongos_systemlog_path: "/data/logs/mongos.log"
+mongodb_systemlog_logappend: "true"
+mongodb_systemlog_logrotate: "rename"
+mongodb_systemlog_destination: "file"
+
+# mongodb pidFilePath
+mongodb_pidfile_path: "/data/dbfiles/mongod.pid"
+
+# mongos
+is_mongos: false
+mongos_daemon_name: "mongos.service"
+mongos_pidfile_path: /data/dbfiles/mongos.pid
+
+# mongodb Config options (if need to use shard it has to be defined)
+mongodb_configdb: "disabled"
+mongodb_cluster_role: "configsvr" #shardsvr
+mongodb_configdb_list: []
+
+mongodb_shard: "disabled"
+
+
+# replication Options
+mongodb_replication_replset:
+mongodb_replication_replindexprefetch: "all"
+mongodb_replication_oplogsize: 1024                 # specifies a maximum size in MB for the replication opreation Log
+
+
+#password for inter-process authentication
+mongodb_keyfile_content: |
+ 
+
+# names and passwords for administrative users
+mongodb_root_admin_name: "admin"
+mongodb_root_admin_password: "{{ admin }}" # password will be set from ansible vault
+
+# backup user also have a role of clusterMonitor (Pbm-agent authenticationadded )
+mongodb_root_backup_name: "backup_user"
+mongodb_root_backup_password: "{{ backup_user }}"
+
+
+# setParameter config
+mongodb_set_parameters:
