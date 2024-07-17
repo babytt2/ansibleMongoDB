@@ -1,0 +1,15 @@
+[Unit]
+Description={{ linux_user }}
+After=network.target
+
+[Service]
+User={{ linux_user }}
+Group={{ linux_user }}
+LimitNOFILE={{ mongodb_openfiles }}
+LimitNPROC={{ mongodb_net_maxconns }}
+ExecStart={{ mongodb_link_path }}/mongod --config {{ mongodb_config_path }}/mongodb.conf
+ExecStop={{ mongodb_link_path }}/mongod --shutdown
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
