@@ -1,0 +1,69 @@
+---
+# sh.addShard("<replica_set1>/master:port, replica:port, replica2:port")
+# sh.addShard("<replica_set2>/master:port, replica:port, replica2:port")
+
+- name: add shard1 master
+  mongodb_shard:
+    login_port: "{{ mongodb_net_port }}"
+    login_user: admin
+    login_password: "{{ admin_pwd }}"
+    shard: "{{ shard_group[0] }}/{{ groups.shard1_master[0] }}:{{ mongodb_net_port }}"
+    state: present
+  when: groups.shard1_master[0] is defined
+
+- name: add shard1 replica
+  mongodb_shard:
+    login_port: "{{ mongodb_net_port }}"
+    login_user: admin
+    login_password: "{{ admin_pwd }}"
+    shard: "{{ shard_group[0] }}/{{ groups.shard1_replica[0] }}:{{ mongodb_net_port }}"
+    state: present
+  when: groups.shard1_replica[0] is defined
+
+# set ignore_errors true, In case of not provided replica2 ip could occur an error which is list has no element.
+- name: add shard1 replica2
+  mongodb_shard:
+    login_port: "{{ mongodb_net_port }}"
+    login_user: admin
+    login_password: "{{ admin_pwd }}"
+    shard: "{{ shard_group[0] }}/{{ groups.shard1_replica2[0] }}:{{ mongodb_net_port }}"
+    state: present
+  when: groups.shard1_replica2[0] is defined
+  ignore_errors: true
+
+- name: add shard2 master
+  mongodb_shard:
+    login_port: "{{ mongodb_net_port }}"
+    login_user: admin
+    login_password: "{{ admin_pwd }}"
+    shard:  "{{ shard_group[1] }}/{{ groups.shard2_master[0] }}:{{ mongodb_net_port }}"
+    state: present
+  when: groups.shard2_master[0] is defined
+
+- name: add shard2 replica
+  mongodb_shard:
+    login_port: "{{ mongodb_net_port }}"
+    login_user: admin
+    login_password: "{{ admin_pwd }}"
+    shard: "{{ shard_group[1] }}/{{ groups.shard2_replica[0] }}:{{ mongodb_net_port }}"
+    state: present
+  when:  groups.shard2_replica[0] is defined
+
+# set ignore_errors true, In case of not provided replica2 ip could occur an error which is list has no element.
+- name: add shard2 replica2
+  mongodb_shard:
+    login_port: "{{ mongodb_net_port }}"
+    login_user: admin
+    login_password: "{{ admin_pwd }}"
+    shard: "{{ shard_group[1] }}/{{ groups.shard2_replica2[0] }}:{{ mongodb_net_port }}" # "{{ shard_group[1] }}/{{ hostvars[groups['shard2_replica2'][0]].ansible_all_ipv4_addresses[0] }}:{{ mongodb_net_port }}"
+    state: present
+  when: groups.shard2_replica2[0] is defined # hostvars[groups['shard2_replica2'][0]].ansible_all_ipv4_addresses[0] is defined and (hostvars[groups['shard2_replica2'][0]].ansible_all_ipv4_addresses[0]|length >0)
+  ignore_errors: true
+
+# - name: Mongos restart
+#   systemd: name={{ mongos_daemon_name }} state=restarted
+#   when: mongodb_manage_service and is_mongos == 'true'
+#
+# - name: Ensure service is started
+#   systemd:  name={{ mongos_daemon_name }} state=started
+#   when : is_mongos == 'true'
