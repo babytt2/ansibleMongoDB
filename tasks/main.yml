@@ -1,0 +1,68 @@
+---
+
+# - name: "[MongoDB] Check MongoDB service"
+#   service_facts:
+# - fail:
+#     msg: Mongodb Already Installed!! Ansible terminates this playbook. ByeBye~!
+#   when: ansible_facts.services["mongodb.service"] is defined
+
+- name: "[prod] include decrypted password"
+  include_vars:
+    file: prod_password.yml
+    name: account_password
+  no_log: True
+  when: mongodb_install_environment=="prod"
+  tags: [mongos]
+
+- name: set password
+  set_fact:
+    "{{ item.key }}": "{{ item.value }}"
+  with_dict: "{{ account_password }}"
+  tags: [mongos]
+
+- name: Include configuration.yml
+  include: configure.yml
+  tags: [mongodb, mongos]
+
+- name: Include installation tasks
+  include: "install_{{ ansible_distribution | lower }}_{{ ansible_distribution_version }}.yml"
+  tags: [mongodb, mongos]
+
+- name: Include replication and auth configuration
+  include: replication_init_auth.yml
+  when: ( mongodb_replication_replset and mongodb_replication_replset !=''
+        and mongodb_security_authorization == 'enabled'
+        and mongodb_master is defined and mongodb_master )
+
+- name: Include replication configuration
+  include: replication.yml
+  when: mongodb_replication_replset and mongodb_replication_replset != ''
+
+- name: Check where admin user already exists
+  command: >
+    mongo --quiet -u {{ mongodb_user_admin_name }} \
+          -p {{ mongodb_user_admin_password }} --port {{ mongodb_net_port }} --eval 'db.version()' admin
+  register: mongodb_user_admin_check
+  changed_when: false
+  check_mode: no
+  ignore_errors: true
+  when: ( mongodb_security_authorization == 'enabled'
+          and (not mongodb_replication_replset
+          or mongodb_replication_replset =='') )
+  no_log: false
+
+- name: Include authorization configuration
+  include: auth_initialization.yml
+  when: ( mongodb_security_authorization == 'enabled'
+          and (not mongodb_replication_replset
+          or mongodb_replication_replset =='')
+          and mongodb_user_admin_check.rc != 0 )
+
+- name: Include account creation
+  include: accounts.yml
+  when: mongodb_security_authorization == 'enabled'
+
+- name : "[mongodb] cluster add shard"
+  include: shard.yml
+  when: mongodb_shard == "enabled" and is_mongos == true
+  tags: [mongos]
