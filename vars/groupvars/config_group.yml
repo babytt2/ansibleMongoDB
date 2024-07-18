@@ -1,0 +1,18 @@
+mongodb_install_environment: "prod"
+# available mongodb version (3.6 /  4.0)
+mongodb_version: "4.0"
+
+mongodb_net_port: ""
+
+mongodb_security_authorization: "enabled"
+
+mongodb_shard: "enabled"
+
+mongodb_configdb: "enabled"
+mongodb_configdb_name: "configsvr"
+
+# change ReplSet Name
+mongodb_replication_replset: "configsvr" #"configrepl"
+
+# group name comes from "mongodb_replication_replset" of each shard
+shard_group: ["server1", "server2"]
