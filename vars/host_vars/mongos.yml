@@ -1,0 +1,14 @@
+# available mongodb version (3.6 /  4.0)
+# mongodb_version: "4.0"
+# mongodb_storage_dbpath: /data/dbfiles
+# mongodb_pidfile_path: /data/dbfiles/mongod.pid
+# mongodb_net_bindip: 0.0.0.0
+
+is_mongos: true
+mongodb_security_authorization : "enabled"
+
+mongodb_configdb: "enabled"
+
+# config db list automatically set from ansible facts to mongos.conf.j2
+# mongodb_configdb_list:
+# mongodb_configdb_list: ['10.10.10.111:27017', '10.10.10.112:27017', '10.10.10.113:27017']
